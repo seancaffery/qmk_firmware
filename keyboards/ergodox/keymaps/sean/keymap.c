@@ -7,7 +7,12 @@
 #define SYMB 1 // symbols
 #define MDIA 2 // media keys
 
-#define EPRM M(1) // Macro 1: Reset EEPROM
+enum custom_keycodes {
+  PLACEHOLDER = SAFE_RANGE, // can always be here
+  EPRM,
+  VRSN,
+  RGB_SLD
+};
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 /* Keymap 0: Basic layer
@@ -45,7 +50,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
                                       KC_LGUI, KC_BSPC, KC_END,
 
         // right hand
-             M(2),    KC_6, KC_7, KC_8,    KC_9,   KC_0,    KC_MINS,
+             KC_TRNS, KC_6, KC_7, KC_8,    KC_9,   KC_0,    KC_MINS,
              KC_LBRC, KC_Y, KC_U, KC_I,    KC_O,   KC_P,    KC_BSPC,
                       KC_H, KC_J, KC_K,    KC_L,   KC_SCLN, KC_QUOT,
              KC_RBRC, KC_N, KC_M, KC_COMM, KC_DOT, KC_SLSH, KC_RSFT,
@@ -158,14 +163,36 @@ const macro_t *action_get_macro(keyrecord_t *record, uint8_t id, uint8_t opt)
           eeconfig_init();
         }
         break;
-        case 2:
-        if (record->event.pressed) {
-          return MACRO( T(COLN), T(PLUS), T(1), T(COLN), END  );
-        }
-        break;
       }
     return MACRO_NONE;
 };
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+  switch (keycode) {
+    // dynamically generate these.
+    case EPRM:
+      if (record->event.pressed) {
+        eeconfig_init();
+      }
+      return false;
+      break;
+    case VRSN:
+      if (record->event.pressed) {
+        SEND_STRING (QMK_KEYBOARD "/" QMK_KEYMAP " @ " QMK_VERSION);
+      }
+      return false;
+      break;
+    case RGB_SLD:
+      if (record->event.pressed) {
+        #ifdef RGBLIGHT_ENABLE
+          rgblight_mode(1);
+        #endif
+      }
+      return false;
+      break;
+  }
+  return true;
+}
 
 // Runs just one time when the keyboard initializes.
 void matrix_init_user(void) {
